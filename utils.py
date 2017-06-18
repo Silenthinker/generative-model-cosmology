@@ -84,7 +84,7 @@ def transform(image, input_height, input_width,
       resize_height, resize_width)
   else:
     cropped_image = scipy.misc.imresize(image, [resize_height, resize_width])
-  return np.array(cropped_image)/127.5 - 1.
+  return np.array(cropped_image)/127.5 - 1. # [0, 255] / (255/2) - 1: [-1, 1] 
 
 def inverse_transform(images):
   return (images+1.)/2.

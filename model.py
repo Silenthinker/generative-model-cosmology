@@ -505,7 +505,7 @@ class DCGAN(object):
     for i, label in enumerate(y):
       y_vec[i,y[i]] = 1.0
     
-    return X/255.,y_vec
+    return X/255.,y_vec # X: [0, 1]
 
   @property
   def model_dir(self):

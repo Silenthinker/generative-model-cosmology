@@ -68,7 +68,7 @@ def extract_labels(filename, num_images):
     return one_hot_encoding
 
 # Augment training data
-def expend_training_data(images, labels):
+def expand_training_data(images, labels):
 
     expanded_images = []
     expanded_labels = []
@@ -130,7 +130,7 @@ def prepare_MNIST_data(use_data_augmentation=True):
 
     # Concatenate train_data & train_labels for random shuffle
     if use_data_augmentation:
-        train_total_data = expend_training_data(train_data, train_labels)
+        train_total_data = expand_training_data(train_data, train_labels)
     else:
         train_total_data = numpy.concatenate((train_data, train_labels), axis=1)
 

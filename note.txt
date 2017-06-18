@@ -1,3 +1,8 @@
 TODO
 Change BN to LN
 Change it to conditional version
+
+Procedure
+* augment image data
+* classify all images with high accuracy (semi-learning using DCGAN?)
+* train DCGAN

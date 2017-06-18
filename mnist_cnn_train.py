@@ -176,4 +176,4 @@ def train(args):
     print("test accuracy for the stored model: %g" % numpy.mean(acc_buffer))
 
 if __name__ == '__main__':
-    train()
+    train(args)

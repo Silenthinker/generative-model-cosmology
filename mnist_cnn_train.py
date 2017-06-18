@@ -4,6 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os
 import numpy
 import argparse
 import tensorflow as tf
@@ -22,10 +23,13 @@ parser.add_argument('--batch_size', type=int, default=64, help='batch size [64]'
 parser.add_argument('--display_step', type=int, default=100, help='display step [100]')
 parser.add_argument('--validation_step', type=int, default=500, help='validation step [500]')
 parser.add_argument('--augment', type=bool, default=True, help='augment data [True]')
+parser.add_argument('--save_dir', type=str, default="model", help='save directory [model]')
 
 args = parser.parse_args()
 
-MODEL_DIRECTORY = "model/model.ckpt"
+if not os.path.exists(args.save_dir):
+    os.makedirs(args.save_dir)
+MODEL_DIRECTORY = os.path.join(args.save_dir, "model.ckpt")
 LOGS_DIRECTORY = "logs/train"
 
 # Params for Train
@@ -37,7 +41,6 @@ validation_step = args.validation_step
 TEST_BATCH_SIZE = args.batch_size
 
 def train(args):
-
     # Some parameters
     batch_size = args.batch_size
     num_labels = mnist_data.NUM_LABELS
@@ -62,7 +65,7 @@ def train(args):
         loss = slim.losses.softmax_cross_entropy(y,y_)
 
     # Create a summary to monitor loss tensor
-    tf.scalar_summary('loss', loss)
+    tf.summary.scalar('loss', loss)
 
     # Define optimizer
     with tf.name_scope("ADAM"):
@@ -80,7 +83,7 @@ def train(args):
         train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss,global_step=batch)
 
     # Create a summary to monitor learning_rate tensor
-    tf.scalar_summary('learning_rate', learning_rate)
+    tf.summary.scalar('learning_rate', learning_rate)
 
     # Get accuracy of model
     with tf.name_scope("ACC"):
@@ -88,10 +91,10 @@ def train(args):
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
     # Create a summary to monitor accuracy tensor
-    tf.scalar_summary('acc', accuracy)
+    tf.summary.scalar('acc', accuracy)
 
     # Merge all summaries into a single op
-    merged_summary_op = tf.merge_all_summaries()
+    merged_summary_op = tf.summary.merge_all()
 
     # Add ops to save and restore all the variables
     saver = tf.train.Saver()
@@ -102,7 +105,7 @@ def train(args):
     total_batch = int(train_size / batch_size)
 
     # op to write logs to Tensorboard
-    summary_writer = tf.train.SummaryWriter(LOGS_DIRECTORY, graph=tf.get_default_graph())
+    summary_writer = tf.summary.FileWriter(LOGS_DIRECTORY, graph=tf.get_default_graph())
 
     # Save the maximum accuracy value for validation data
     max_acc = 0.
@@ -133,7 +136,10 @@ def train(args):
             # Display logs
             if i % display_step == 0:
                 print("Epoch:", '%04d,' % (epoch + 1),
-                "batch_index %4d/%4d, training accuracy %.5f" % (i, total_batch, train_accuracy))
+                    "batch_index %4d/%4d, training accuracy %.5f" % (i, total_batch, train_accuracy))
+                with open("log.out", "a") as log_file:
+                    log_file.write(("Epoch: {}, batch_index: {}/{}, \
+                        training accuracy: {}}\n".format(epoch + 1, i, total_batch, train_accuracy)))
 
             # Get accuracy for validation data
             if i % validation_step == 0:

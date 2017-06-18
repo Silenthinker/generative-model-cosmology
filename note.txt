@@ -1,0 +1,3 @@
+TODO
+Change BN to LN
+Change it to conditional version

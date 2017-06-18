@@ -150,8 +150,7 @@ def train(args):
                 print("Epoch:", '%04d,' % (epoch + 1),
                     "batch_index %4d/%4d, validation accuracy %.5f" % (i, total_batch, validation_accuracy))
                 with open("log.out", "a") as log_file:
-                    log_file.write("Epoch: {}, batch_index: {}/{}, \
-                        validation accuracy: {}\n".format(epoch + 1, i, total_batch, validation_accuracy))
+                    log_file.write("Epoch: {}, batch_index: {}/{}, validation accuracy: {}\n".format(epoch + 1, i, total_batch, validation_accuracy))
             # Save the current model if the maximum accuracy is updated
             if validation_accuracy > max_acc:
                 max_acc = validation_accuracy

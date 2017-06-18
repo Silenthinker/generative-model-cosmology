@@ -6,9 +6,14 @@ from __future__ import print_function
 
 import gzip
 import os
+import csv
+import sys
+import random
+from PIL import Image
 
-import numpy
+import numpy as np
 from scipy import ndimage
+import scipy as sp
 
 from six.moves import urllib
 
@@ -45,10 +50,10 @@ def extract_data(filename, num_images, input_size):
     with gzip.open(filename) as bytestream:
         bytestream.read(16)
         buf = bytestream.read(input_size * input_size * num_images * NUM_CHANNELS)
-        data = numpy.frombuffer(buf, dtype=numpy.uint8).astype(numpy.float32)
+        data = np.frombuffer(buf, dtype=np.uint8).astype(np.float32)
         data = (data - (PIXEL_DEPTH / 2.0)) / PIXEL_DEPTH # normalization
         data = data.reshape(num_images, input_size, input_size, NUM_CHANNELS)
-        data = numpy.reshape(data, [num_images, -1])
+        data = np.reshape(data, [num_images, -1])
     return data
 
 # Extract the labels
@@ -58,11 +63,11 @@ def extract_labels(filename, num_images, num_classes):
     with gzip.open(filename) as bytestream:
         bytestream.read(8)
         buf = bytestream.read(1 * num_images)
-        labels = numpy.frombuffer(buf, dtype=numpy.uint8).astype(numpy.int64)
+        labels = np.frombuffer(buf, dtype=np.uint8).astype(np.int64)
         num_labels_data = len(labels)
-        one_hot_encoding = numpy.zeros((num_labels_data,num_classes))
-        one_hot_encoding[numpy.arange(num_labels_data),labels] = 1
-        one_hot_encoding = numpy.reshape(one_hot_encoding, [-1, num_classes])
+        one_hot_encoding = np.zeros((num_labels_data,num_classes))
+        one_hot_encoding[np.arange(num_labels_data),labels] = 1
+        one_hot_encoding = np.reshape(one_hot_encoding, [-1, num_classes])
     return one_hot_encoding
 
 # Augment training data
@@ -75,7 +80,7 @@ def expand_training_data(images, labels, input_size):
     for x, y in zip(images, labels):
         j = j+1
         if j%100==0:
-            print ('expanding data : %03d / %03d' % (j,numpy.size(images,0)))
+            print ('expanding data : %03d / %03d' % (j,np.size(images,0)))
 
         # register original data
         expanded_images.append(x)
@@ -83,26 +88,26 @@ def expand_training_data(images, labels, input_size):
 
         # get a value for the background
         # zero is the expected value, but median() is used to estimate background's value 
-        bg_value = numpy.median(x) # this is regarded as background's value        
-        image = numpy.reshape(x, (-1, input_size))
+        bg_value = np.median(x) # this is regarded as background's value        
+        image = np.reshape(x, (-1, input_size))
 
         for i in range(4):
             # rotate the image with random degree
-            angle = numpy.random.randint(-15,15,1)
+            angle = np.random.randint(-15,15,1)
             new_img = ndimage.rotate(image,angle,reshape=False, cval=bg_value)
 
             # shift the image with random distance
-            shift = numpy.random.randint(-2, 2, 2)
+            shift = np.random.randint(-2, 2, 2)
             new_img_ = ndimage.shift(new_img,shift, cval=bg_value)
 
             # register new training data
-            expanded_images.append(numpy.reshape(new_img_, input_size*input_size))
+            expanded_images.append(np.reshape(new_img_, input_size*input_size))
             expanded_labels.append(y)
 
     # images and labels are concatenated for random-shuffle at each epoch
     # notice that pair of image and label should not be broken
-    expanded_train_total_data = numpy.concatenate((expanded_images, expanded_labels), axis=1)
-    numpy.random.shuffle(expanded_train_total_data)
+    expanded_train_total_data = np.concatenate((expanded_images, expanded_labels), axis=1)
+    np.random.shuffle(expanded_train_total_data)
 
     return expanded_train_total_data
 
@@ -117,7 +122,7 @@ def prepare_MNIST_data(args):
     test_data_filename = maybe_download('t10k-images-idx3-ubyte.gz')
     test_labels_filename = maybe_download('t10k-labels-idx1-ubyte.gz')
 
-    # Extract it into numpy arrays.
+    # Extract it into np arrays.
     train_data = extract_data(train_data_filename, 60000, input_size)
     train_labels = extract_labels(train_labels_filename, 60000, num_classes)
     test_data = extract_data(test_data_filename, 10000, input_size)
@@ -133,7 +138,7 @@ def prepare_MNIST_data(args):
     if use_data_augmentation:
         train_total_data = expand_training_data(train_data, train_labels, input_size)
     else:
-        train_total_data = numpy.concatenate((train_data, train_labels), axis=1)
+        train_total_data = np.concatenate((train_data, train_labels), axis=1)
 
     train_size = train_total_data.shape[0]
 
@@ -148,6 +153,12 @@ def prepare_cosmology_data(args):
             next(csv_fp)
             d = dict(filter(None, csv_fp))
             return d
+
+    def one_hot_encoding(labels):
+        res = np.zeros((labels.shape[0], args.num_classes))
+        res[range(labels.shape[0]), labels] = 1
+        res = np.reshape(res, (-1, args.num_classes))
+        return res
 
     data_path = args.data_dir
     input_size = args.input_size
@@ -167,8 +178,8 @@ def prepare_cosmology_data(args):
     label_dict=csv_to_dict(label_file)
     img_prefixes=list(label_dict.keys())
     # To determine if resize
-    sample_image = Image.open(os.path.join(labeled_path,"{}.png".format(img_prefix[0])))
-    if sample_image.shape[0] == input_size:
+    sample_image = Image.open(os.path.join(labeled_path,"{}.png".format(img_prefixes[0])))
+    if np.array(sample_image.getdata()).shape[0] == input_size:
         resize = False
     else:
         resize = True
@@ -177,9 +188,9 @@ def prepare_cosmology_data(args):
     n_test=len(img_prefixes)-n_train
     n_val = int(val_ratio*len(img_prefixes))
     train_mat=np.zeros((n_train, feat_size))
-    train_y=np.zeros(n_train)
+    train_y=np.zeros(n_train, dtype=int)
     test_mat=np.zeros((n_test,feat_size))
-    test_y=np.zeros(n_test)
+    test_y=np.zeros(n_test, dtype=int)
     train_idx=0
     test_idx=0
 
@@ -188,13 +199,13 @@ def prepare_cosmology_data(args):
         print("Image: {}/{}".format(idx+1,len(img_prefixes)))
         raw_image=Image.open(os.path.join(labeled_path,"{}.png".format(img_prefix)))
         if resize:
-            resized_image = sp.misc.imresize(raw_image, (size, size))
+            resized_image = sp.misc.imresize(raw_image, (input_size, input_size))
             sp.misc.imsave(os.path.join(resized_path, "{}.png".format(img_prefix)), resized_image)
             img_arr=resized_image.astype(np.uint8)
         else:
             img_arr=np.array(raw_image.getdata()).reshape(raw_image.size[0],raw_image.size[1]).astype(np.uint8)
         img_arr = img_arr.flatten()
-        label=float(label_dict[img_prefix])
+        label = float(label_dict[img_prefix])
 
         if idx<n_train:
             train_mat[train_idx,:]=img_arr
@@ -204,19 +215,21 @@ def prepare_cosmology_data(args):
             test_mat[test_idx,:] = img_arr
             test_y[test_idx]=label
             test_idx+=1
+
+    # convert to one hot encoding
+    train_labels = one_hot_encoding(train_y)
     # generate validation data
     validation_data = test_mat[0:n_val, :]
-    validation_labels = test_y[0:n_val, :]
+    validation_labels = one_hot_encoding(test_y[0:n_val])
     # generate test data
     test_data = test_mat[n_val:, :]
-    test_labels = test_y[n_val:, :]
+    test_labels = one_hot_encoding(test_y[n_val:])
 
     # Concatenate train_data & train_labels for random shuffle
     if use_data_augmentation:
-        train_total_data = expand_training_data(train_mat, train_y, input_size)
+        train_total_data = expand_training_data(train_mat, train_labels, input_size)
     else:
-        train_total_data = numpy.concatenate((train_mat, train_y), axis=1)
-
+        train_total_data = np.concatenate((train_mat, train_labels), axis=1)
     train_size = train_total_data.shape[0]
 
     return train_total_data, train_size, validation_data, validation_labels, test_data, test_labels

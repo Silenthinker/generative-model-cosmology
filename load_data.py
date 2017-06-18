@@ -18,10 +18,8 @@ SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
 DATA_DIRECTORY = "data"
 
 # Params for MNIST
-IMAGE_SIZE = 28
 NUM_CHANNELS = 1
 PIXEL_DEPTH = 255
-NUM_LABELS = 10
 VALIDATION_SIZE = 5000  # Size of the validation set.
 
 # Download MNIST data
@@ -38,7 +36,7 @@ def maybe_download(filename):
     return filepath
 
 # Extract the images
-def extract_data(filename, num_images):
+def extract_data(filename, num_images, input_size):
     """Extract the images into a 4D tensor [image index, y, x, channels].
 
     Values are rescaled from [0, 255] down to [-0.5, 0.5].
@@ -46,15 +44,15 @@ def extract_data(filename, num_images):
     print('Extracting', filename)
     with gzip.open(filename) as bytestream:
         bytestream.read(16)
-        buf = bytestream.read(IMAGE_SIZE * IMAGE_SIZE * num_images * NUM_CHANNELS)
+        buf = bytestream.read(input_size * input_size * num_images * NUM_CHANNELS)
         data = numpy.frombuffer(buf, dtype=numpy.uint8).astype(numpy.float32)
         data = (data - (PIXEL_DEPTH / 2.0)) / PIXEL_DEPTH # normalization
-        data = data.reshape(num_images, IMAGE_SIZE, IMAGE_SIZE, NUM_CHANNELS)
+        data = data.reshape(num_images, input_size, input_size, NUM_CHANNELS)
         data = numpy.reshape(data, [num_images, -1])
     return data
 
 # Extract the labels
-def extract_labels(filename, num_images):
+def extract_labels(filename, num_images, num_classes):
     """Extract the labels into a vector of int64 label IDs."""
     print('Extracting', filename)
     with gzip.open(filename) as bytestream:
@@ -62,13 +60,13 @@ def extract_labels(filename, num_images):
         buf = bytestream.read(1 * num_images)
         labels = numpy.frombuffer(buf, dtype=numpy.uint8).astype(numpy.int64)
         num_labels_data = len(labels)
-        one_hot_encoding = numpy.zeros((num_labels_data,NUM_LABELS))
+        one_hot_encoding = numpy.zeros((num_labels_data,num_classes))
         one_hot_encoding[numpy.arange(num_labels_data),labels] = 1
-        one_hot_encoding = numpy.reshape(one_hot_encoding, [-1, NUM_LABELS])
+        one_hot_encoding = numpy.reshape(one_hot_encoding, [-1, num_classes])
     return one_hot_encoding
 
 # Augment training data
-def expand_training_data(images, labels):
+def expand_training_data(images, labels, input_size):
 
     expanded_images = []
     expanded_labels = []
@@ -86,7 +84,7 @@ def expand_training_data(images, labels):
         # get a value for the background
         # zero is the expected value, but median() is used to estimate background's value 
         bg_value = numpy.median(x) # this is regarded as background's value        
-        image = numpy.reshape(x, (-1, 28))
+        image = numpy.reshape(x, (-1, input_size))
 
         for i in range(4):
             # rotate the image with random degree
@@ -98,7 +96,7 @@ def expand_training_data(images, labels):
             new_img_ = ndimage.shift(new_img,shift, cval=bg_value)
 
             # register new training data
-            expanded_images.append(numpy.reshape(new_img_, 784))
+            expanded_images.append(numpy.reshape(new_img_, input_size*input_size))
             expanded_labels.append(y)
 
     # images and labels are concatenated for random-shuffle at each epoch
@@ -109,7 +107,10 @@ def expand_training_data(images, labels):
     return expanded_train_total_data
 
 # Prepare MNISt data
-def prepare_MNIST_data(use_data_augmentation=True):
+def prepare_MNIST_data(args):
+    use_data_augmentation = args.augment
+    input_size = args.input_size
+    num_classes = args.num_classes
     # Get the data.
     train_data_filename = maybe_download('train-images-idx3-ubyte.gz')
     train_labels_filename = maybe_download('train-labels-idx1-ubyte.gz')
@@ -117,10 +118,10 @@ def prepare_MNIST_data(use_data_augmentation=True):
     test_labels_filename = maybe_download('t10k-labels-idx1-ubyte.gz')
 
     # Extract it into numpy arrays.
-    train_data = extract_data(train_data_filename, 60000)
-    train_labels = extract_labels(train_labels_filename, 60000)
-    test_data = extract_data(test_data_filename, 10000)
-    test_labels = extract_labels(test_labels_filename, 10000)
+    train_data = extract_data(train_data_filename, 60000, input_size)
+    train_labels = extract_labels(train_labels_filename, 60000, num_classes)
+    test_data = extract_data(test_data_filename, 10000, input_size)
+    test_labels = extract_labels(test_labels_filename, 10000, num_classes)
 
     # Generate a validation set.
     validation_data = train_data[:VALIDATION_SIZE, :]
@@ -130,7 +131,7 @@ def prepare_MNIST_data(use_data_augmentation=True):
 
     # Concatenate train_data & train_labels for random shuffle
     if use_data_augmentation:
-        train_total_data = expand_training_data(train_data, train_labels)
+        train_total_data = expand_training_data(train_data, train_labels, input_size)
     else:
         train_total_data = numpy.concatenate((train_data, train_labels), axis=1)
 
@@ -138,15 +139,19 @@ def prepare_MNIST_data(use_data_augmentation=True):
 
     return train_total_data, train_size, validation_data, validation_labels, test_data, test_labels
 
-def prepare_cosmology_data(data_path, input_size=128, use_data_augmentation=True):
-""" Prepare cosmology data
-"""
+def prepare_cosmology_data(args):
+    """ Prepare cosmology data
+    """
     def csv_to_dict(csv_path):
         with open(csv_path,'r') as fp:
             csv_fp=csv.reader(fp)
             next(csv_fp)
             d = dict(filter(None, csv_fp))
             return d
+
+    data_path = args.data_dir
+    input_size = args.input_size
+    use_data_augmentation = args.augment
 
     train_ratio, val_ratio = 0.7, 0.1
     test_ratio = 1 - train_ratio - val_ratio
@@ -208,7 +213,7 @@ def prepare_cosmology_data(data_path, input_size=128, use_data_augmentation=True
 
     # Concatenate train_data & train_labels for random shuffle
     if use_data_augmentation:
-        train_total_data = expand_training_data(train_mat, train_y)
+        train_total_data = expand_training_data(train_mat, train_y, input_size)
     else:
         train_total_data = numpy.concatenate((train_mat, train_y), axis=1)
 

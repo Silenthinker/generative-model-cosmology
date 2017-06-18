@@ -10,14 +10,16 @@ import argparse
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
-import mnist_data
+import load_data
 import cnn_model
 
 
 parser = argparse.ArgumentParser(description='Image classification')
+parser.add_argument('--input_size', type=int, required=True, help='input size')
+parser.add_argument('--num_classes', type=int, required=True, help='number of classes')
+parser.add_argument('--dataset', type=str, required=True, choices=["mnist", "cosmology"], help='dataset')
+
 parser.add_argument('--data_dir', type=str, default="data", help='data directory [data]')
-parser.add_argument('--input_size', type=int, default=128, help='input size [128]')
-parser.add_argument('--num_classes', type=int, default=2, help='number of classes [2]')
 parser.add_argument('--training_epochs', type=int, default=10, help='epoch number [10]')
 parser.add_argument('--batch_size', type=int, default=64, help='batch size [64]')
 parser.add_argument('--display_step', type=int, default=100, help='display step [100]')
@@ -43,13 +45,14 @@ TEST_BATCH_SIZE = args.batch_size
 def train(args):
     # Some parameters
     batch_size = args.batch_size
-    num_labels = mnist_data.NUM_LABELS
     input_size = args.input_size
     num_classes = args.num_classes
 
-    # Prepare mnist data
-    train_total_data, train_size, validation_data, validation_labels, test_data, test_labels = mnist_data.prepare_MNIST_data(args.augment)
-
+    # Prepare data
+    if args.dataset == "mnist":
+        train_total_data, train_size, validation_data, validation_labels, test_data, test_labels = load_data.prepare_MNIST_data(args)
+    else:
+        train_total_data, train_size, validation_data, validation_labels, test_data, test_labels = load_data.prepare_cosmology_data(args)
     # Boolean for MODE of train or test
     is_training = tf.placeholder(tf.bool, name='MODE')
 
@@ -115,8 +118,8 @@ def train(args):
 
         # Random shuffling
         numpy.random.shuffle(train_total_data)
-        train_data_ = train_total_data[:, :-num_labels]
-        train_labels_ = train_total_data[:, -num_labels:]
+        train_data_ = train_total_data[:, :-num_classes]
+        train_labels_ = train_total_data[:, -num_classes:]
 
         # Loop over all batches
         for i in range(total_batch):

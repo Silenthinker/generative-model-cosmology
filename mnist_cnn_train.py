@@ -141,8 +141,8 @@ def train(args):
                 print("Epoch:", '%04d,' % (epoch + 1),
                     "batch_index %4d/%4d, training accuracy %.5f" % (i, total_batch, train_accuracy))
                 with open("log.out", "a") as log_file:
-                    log_file.write(("Epoch: {}, batch_index: {}/{}, \
-                        training accuracy: {}}\n".format(epoch + 1, i, total_batch, train_accuracy)))
+                    log_file.write("Epoch: {}, batch_index: {}/{}, \
+                        training accuracy: {}\n".format(epoch + 1, i, total_batch, train_accuracy))
 
             # Get accuracy for validation data
             if i % validation_step == 0:

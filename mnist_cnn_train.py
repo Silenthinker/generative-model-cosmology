@@ -140,9 +140,6 @@ def train(args):
             if i % display_step == 0:
                 print("Epoch:", '%04d,' % (epoch + 1),
                     "batch_index %4d/%4d, training accuracy %.5f" % (i, total_batch, train_accuracy))
-                with open("log.out", "a") as log_file:
-                    log_file.write("Epoch: {}, batch_index: {}/{}, \
-                        training accuracy: {}\n".format(epoch + 1, i, total_batch, train_accuracy))
 
             # Get accuracy for validation data
             if i % validation_step == 0:
@@ -151,8 +148,10 @@ def train(args):
                 feed_dict={x: validation_data, y_: validation_labels, is_training: False})
 
                 print("Epoch:", '%04d,' % (epoch + 1),
-                "batch_index %4d/%4d, validation accuracy %.5f" % (i, total_batch, validation_accuracy))
-
+                    "batch_index %4d/%4d, validation accuracy %.5f" % (i, total_batch, validation_accuracy))
+                with open("log.out", "a") as log_file:
+                    log_file.write("Epoch: {}, batch_index: {}/{}, \
+                        validation accuracy: {}\n".format(epoch + 1, i, total_batch, validation_accuracy))
             # Save the current model if the maximum accuracy is updated
             if validation_accuracy > max_acc:
                 max_acc = validation_accuracy

@@ -183,6 +183,8 @@ def prepare_cosmology_data(args):
         resize = False
     else:
         resize = True
+        if not os.path.exists(resized_path):
+            os.makedirs(resized_path)
     random.shuffle(img_prefixes)
     n_train=int(train_ratio*len(img_prefixes))
     n_test=len(img_prefixes)-n_train

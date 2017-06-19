@@ -71,7 +71,7 @@ def extract_labels(filename, num_images, num_classes):
     return one_hot_encoding
 
 # Augment training data
-def expand_training_data(images, labels, input_size):
+def expand_training_data(images, labels, input_size, args):
 
     expanded_images = []
     expanded_labels = []
@@ -91,9 +91,9 @@ def expand_training_data(images, labels, input_size):
         bg_value = np.median(x) # this is regarded as background's value        
         image = np.reshape(x, (-1, input_size))
 
-        for i in range(4):
+        for i in range(args.augment):
             # rotate the image with random degree
-            angle = np.random.randint(-15,15,1)
+            angle = np.random.randint(-180,180,1)
             new_img = ndimage.rotate(image,angle,reshape=False, cval=bg_value)
 
             # shift the image with random distance
@@ -113,7 +113,7 @@ def expand_training_data(images, labels, input_size):
 
 # Prepare MNISt data
 def prepare_MNIST_data(args):
-    use_data_augmentation = args.augment
+    use_data_augmentation = True if args.augment > 0 else False
     input_size = args.input_size
     num_classes = args.num_classes
     # Get the data.
@@ -136,7 +136,7 @@ def prepare_MNIST_data(args):
 
     # Concatenate train_data & train_labels for random shuffle
     if use_data_augmentation:
-        train_total_data = expand_training_data(train_data, train_labels, input_size)
+        train_total_data = expand_training_data(train_data, train_labels, input_size, args)
     else:
         train_total_data = np.concatenate((train_data, train_labels), axis=1)
 
@@ -162,7 +162,7 @@ def prepare_cosmology_data(args):
 
     data_path = args.data_dir
     input_size = args.input_size
-    use_data_augmentation = args.augment
+    use_data_augmentation = True if args.augment > 0 else False
 
     train_ratio, val_ratio = 0.7, 0.1
     test_ratio = 1 - train_ratio - val_ratio
@@ -229,7 +229,7 @@ def prepare_cosmology_data(args):
 
     # Concatenate train_data & train_labels for random shuffle
     if use_data_augmentation:
-        train_total_data = expand_training_data(train_mat, train_labels, input_size)
+        train_total_data = expand_training_data(train_mat, train_labels, input_size, args)
     else:
         train_total_data = np.concatenate((train_mat, train_labels), axis=1)
     train_size = train_total_data.shape[0]

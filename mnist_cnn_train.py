@@ -24,7 +24,7 @@ parser.add_argument('--training_epochs', type=int, default=10, help='epoch numbe
 parser.add_argument('--batch_size', type=int, default=64, help='batch size [64]')
 parser.add_argument('--display_step', type=int, default=100, help='display step [100]')
 parser.add_argument('--validation_step', type=int, default=500, help='validation step [500]')
-parser.add_argument('--augment', type=bool, default=True, help='augment data [True]')
+parser.add_argument('--augment', type=int, default=4, help='the number of times for augment data [4]')
 parser.add_argument('--save_dir', type=str, default="model", help='save directory [model]')
 
 args = parser.parse_args()

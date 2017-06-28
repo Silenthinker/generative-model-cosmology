@@ -5,7 +5,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
-import numpy
+import numpy as np
 import argparse
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
@@ -122,7 +122,7 @@ def train(args):
     for epoch in range(training_epochs):
 
         # Random shuffling
-        numpy.random.shuffle(train_total_data)
+        np.random.shuffle(train_total_data)
         train_data_ = train_total_data[:, :-num_classes]
         train_y = train_total_data[:, -num_classes:]
 
@@ -188,10 +188,10 @@ def train(args):
         batch_ys = test_y[offset:(offset + batch_size), :]
 
         y_final = sess.run(y, feed_dict={x: batch_xs, y_: batch_ys, is_training: False})
-        correct_prediction = numpy.equal(numpy.argmax(y_final, 1), numpy.argmax(batch_ys, 1))
-        acc_buffer.append(numpy.sum(correct_prediction) / batch_size)
+        correct_prediction = np.equal(np.argmax(y_final, 1), np.argmax(batch_ys, 1))
+        acc_buffer.append(np.sum(correct_prediction) / batch_size)
 
-    print("test accuracy for the stored model: %g" % numpy.mean(acc_buffer))
+    print("test accuracy for the stored model: %g" % np.mean(acc_buffer))
 
 if __name__ == '__main__':
     train(args)

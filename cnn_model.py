@@ -33,5 +33,8 @@ def CNN(args, inputs, is_training=True):
         # biases_initializer = init_ops.zeros_initializer,
         net = slim.fully_connected(net, 1024, scope='fc3')
         net = slim.dropout(net, is_training=is_training, scope='dropout3')  # 0.5 by default
-        outputs = slim.fully_connected(net, args.num_classes, activation_fn=None, normalizer_fn=None, scope='fco')
+        if args.num_classes > 1:
+            outputs = slim.fully_connected(net, args.num_classes, activation_fn=None, normalizer_fn=None, scope='fco')
+        else: # regression
+            outputs = slim.fully_connected(net, 1, activation_fn=None, normalizer_fn=None, scope="fco")
     return outputs

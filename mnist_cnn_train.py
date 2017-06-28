@@ -50,9 +50,9 @@ def train(args):
 
     # Prepare data
     if args.dataset == "mnist":
-        train_total_data, train_size, validation_data, validation_labels, test_data, test_labels = load_data.prepare_MNIST_data(args)
+        train_total_data, train_size, validation_data, validation_y, test_data, test_y = load_data.prepare_MNIST_data(args)
     else:
-        train_total_data, train_size, validation_data, validation_labels, test_data, test_labels = load_data.prepare_cosmology_data(args)
+        train_total_data, train_size, validation_data, validation_y, test_data, test_y = load_data.prepare_cosmology_data(args)
     # Boolean for MODE of train or test
     is_training = tf.placeholder(tf.bool, name='MODE')
 
@@ -65,7 +65,10 @@ def train(args):
 
     # Get loss of model
     with tf.name_scope("LOSS"):
-        loss = slim.losses.softmax_cross_entropy(y,y_)
+        if args.num_classes > 1:
+            loss = slim.losses.softmax_cross_entropy(y,y_)
+        else: # mean square loss for regression
+            loss = tf.reduce_mean(tf.pow(y-y_, 2))
 
     # Create a summary to monitor loss tensor
     tf.summary.scalar('loss', loss)
@@ -90,8 +93,11 @@ def train(args):
 
     # Get accuracy of model
     with tf.name_scope("ACC"):
-        correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
-        accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+        if args.num_classes > 1:
+            correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
+            accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+        else:
+            accuracy = tf.scalar_mul(-1.0, loss)
 
     # Create a summary to monitor accuracy tensor
     tf.summary.scalar('acc', accuracy)
@@ -119,7 +125,7 @@ def train(args):
         # Random shuffling
         numpy.random.shuffle(train_total_data)
         train_data_ = train_total_data[:, :-num_classes]
-        train_labels_ = train_total_data[:, -num_classes:]
+        train_y = train_total_data[:, -num_classes:]
 
         # Loop over all batches
         for i in range(total_batch):
@@ -127,7 +133,7 @@ def train(args):
             # Compute the offset of the current minibatch in the data.
             offset = (i * batch_size) % (train_size)
             batch_xs = train_data_[offset:(offset + batch_size), :]
-            batch_ys = train_labels_[offset:(offset + batch_size), :]
+            batch_ys = train_y[offset:(offset + batch_size), :]
 
             # Run optimization op (backprop), loss op (to get loss value)
             # and summary nodes
@@ -140,7 +146,7 @@ def train(args):
             if i % display_step == 0:
                 # Calculate accuracy
                 validation_accuracy = sess.run(accuracy,
-                    feed_dict={x: validation_data, y_: validation_labels, is_training: False})
+                    feed_dict={x: validation_data, y_: validation_y, is_training: False})
                 print("Epoch: {}, batch_index: {}/{}, training accuracy: {}, validation accuracy: {}".format(epoch + 1, i, total_batch, train_accuracy, validation_accuracy))
                 with open("log.out", "a") as log_file:
                     log_file.write("Epoch: {}, batch_index: {}/{}, training accuracy: {}, validation accuracy: {}\n".format(epoch + 1, i, total_batch, train_accuracy, validation_accuracy))
@@ -150,7 +156,7 @@ def train(args):
             if i % validation_step == 0:
                 # Calculate accuracy
                 validation_accuracy = sess.run(accuracy,
-                feed_dict={x: validation_data, y_: validation_labels, is_training: False})
+                feed_dict={x: validation_data, y_: validation_y, is_training: False})
 
                 print("Epoch:", '%04d,' % (epoch + 1),
                     "batch_index %4d/%4d, validation accuracy %.5f" % (i, total_batch, validation_accuracy))
@@ -169,7 +175,7 @@ def train(args):
     saver.restore(sess, MODEL_DIRECTORY)
 
     # Calculate accuracy for all mnist test images
-    test_size = test_labels.shape[0]
+    test_size = test_y.shape[0]
     batch_size = TEST_BATCH_SIZE
     total_batch = int(test_size / batch_size)
 
@@ -180,7 +186,7 @@ def train(args):
         # Compute the offset of the current minibatch in the data.
         offset = (i * batch_size) % (test_size)
         batch_xs = test_data[offset:(offset + batch_size), :]
-        batch_ys = test_labels[offset:(offset + batch_size), :]
+        batch_ys = test_y[offset:(offset + batch_size), :]
 
         y_final = sess.run(y, feed_dict={x: batch_xs, y_: batch_ys, is_training: False})
         correct_prediction = numpy.equal(numpy.argmax(y_final, 1), numpy.argmax(batch_ys, 1))

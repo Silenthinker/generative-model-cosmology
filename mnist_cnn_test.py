@@ -50,7 +50,7 @@ def test(args, model_directory, batch_size):
     # tf Graph input
     x = tf.placeholder(tf.float32, [None, input_size&input_size])
     y_ = tf.placeholder(tf.float32, [None, num_classes])  # answer
-    y = cnn_model.CNN(x, is_training=is_training)
+    y = cnn_model.CNN(args, x, is_training=is_training)
 
     # Add ops to save and restore all the variables
     sess = tf.InteractiveSession()
@@ -146,7 +146,7 @@ def test_ensemble(args, model_directory_list, batch_size):
     # tf Graph input
     x = tf.placeholder(tf.float32, [None, input_size*input_size])
     y_ = tf.placeholder(tf.float32, [None, num_classes])  # answer
-    y = cnn_model.CNN(x, is_training=is_training)
+    y = cnn_model.CNN(args, x, is_training=is_training)
 
     # Add ops to save and restore all the variables
     sess = tf.InteractiveSession()

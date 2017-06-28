@@ -170,9 +170,14 @@ def prepare_cosmology_data(args):
     feat_size = input_size*input_size
 
     # Paths
-    resized_path = os.path.join(data_path, "resized")
-    labeled_path=os.path.join(data_path,"labeled")
-    label_file=os.path.join(data_path,"labeled.csv")
+    if args.num_classes > 1:
+        resized_path = os.path.join(data_path, "labeled_resized")
+        labeled_path=os.path.join(data_path,"labeled")
+        label_file=os.path.join(data_path,"labeled.csv")
+    else:
+        resized_path = os.path.join(data_path, "scored_resized")
+        labeled_path=os.path.join(data_path,"scored")
+        label_file=os.path.join(data_path,"scored.csv")
 
     # Initialization
     label_dict=csv_to_dict(label_file)
@@ -190,9 +195,9 @@ def prepare_cosmology_data(args):
     n_test=len(img_prefixes)-n_train
     n_val = int(val_ratio*len(img_prefixes))
     train_mat=np.zeros((n_train, feat_size))
-    train_y=np.zeros(n_train, dtype=int)
+    _train_y=np.zeros(n_train, dtype=int)
     test_mat=np.zeros((n_test,feat_size))
-    test_y=np.zeros(n_test, dtype=int)
+    _test_y=np.zeros(n_test, dtype=int)
     train_idx=0
     test_idx=0
 
@@ -211,27 +216,32 @@ def prepare_cosmology_data(args):
 
         if idx<n_train:
             train_mat[train_idx,:]=img_arr
-            train_y[train_idx]=label
+            _train_y[train_idx]=label
             train_idx+=1
         else:
             test_mat[test_idx,:] = img_arr
-            test_y[test_idx]=label
+            _test_y[test_idx]=label
             test_idx+=1
 
-    # convert to one hot encoding
-    train_labels = one_hot_encoding(train_y)
     # generate validation data
     validation_data = test_mat[0:n_val, :]
-    validation_labels = one_hot_encoding(test_y[0:n_val])
     # generate test data
     test_data = test_mat[n_val:, :]
-    test_labels = one_hot_encoding(test_y[n_val:])
+    # convert to one hot encoding
+    if args.num_classes > 1: # if classification problem
+        train_y = one_hot_encoding(_train_y)
+        validation_y = one_hot_encoding(_test_y[0:n_val])
+        test_y = one_hot_encoding(_test_y[n_val:])
+    else: # if regression
+        train_y = np.reshape(_train_y, (-1, 1))
+        validation_y = np.reshape(_test_y[0:n_val], (-1, 1))
+        test_y = np.reshape(_test_y[n_val:], (-1, 1))
 
-    # Concatenate train_data & train_labels for random shuffle
+    # Concatenate train_data & train_y for random shuffle
     if use_data_augmentation:
-        train_total_data = expand_training_data(train_mat, train_labels, input_size, args)
+        train_total_data = expand_training_data(train_mat, train_y, input_size, args)
     else:
-        train_total_data = np.concatenate((train_mat, train_labels), axis=1)
+        train_total_data = np.concatenate((train_mat, train_y), axis=1)
     train_size = train_total_data.shape[0]
 
-    return train_total_data, train_size, validation_data, validation_labels, test_data, test_labels
+    return train_total_data, train_size, validation_data, validation_y, test_data, test_y

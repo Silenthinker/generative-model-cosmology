@@ -24,7 +24,9 @@ def CNN(args, inputs, is_training=True):
         net = slim.max_pool2d(net, [2, 2], scope='pool1')
         net = slim.conv2d(net, 64, [5, 5], scope='conv2')
         net = slim.max_pool2d(net, [2, 2], scope='pool2')
-        net = slim.flatten(net, scope='flatten3')
+        net = slim.conv2d(net, 128, [5, 5], scope='conv3')
+        net = slim.max_pool2d(net, [2, 2], scope='pool3')
+        net = slim.flatten(net, scope='flatten4')
 
         # For slim.fully_connected, default argument values are like
         # activation_fn = nn.relu,
@@ -36,5 +38,5 @@ def CNN(args, inputs, is_training=True):
         if args.num_classes > 1:
             outputs = slim.fully_connected(net, args.num_classes, activation_fn=None, normalizer_fn=None, scope='fco')
         else: # regression
-            outputs = slim.fully_connected(net, 1, activation_fn=None, normalizer_fn=None, scope="fco")
+            outputs = slim.fully_connected(net, 1, activation_fn=tf.nn.relu, normalizer_fn=None, scope="fco")
     return outputs

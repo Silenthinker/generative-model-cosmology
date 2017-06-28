@@ -12,6 +12,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 import mnist_data
 import cnn_model
+from load_data import normalize
 
 # user input
 from argparse import ArgumentParser
@@ -22,20 +23,17 @@ TEST_BATCH_SIZE = 5000
 ENSEMBLE = True
 
 # build parser
-def build_parser():
-    parser = ArgumentParser()
 
-    parser.add_argument('--model-dir',
-                        dest='model_directory', help='directory where model to be tested is stored',
-                        metavar='MODEL_DIRECTORY', required=True)
-    parser.add_argument('--batch_size', type=int, help='batch size for test',
-                        metavar='TEST_BATCH_SIZE', required=True)
-    parser.add_argument('--use-ensemble',
-                        dest='ensemble', help='boolean for usage of ensemble',
-                        metavar='ENSEMBLE', required=True)
-    parser.add_argument('--input_size', type=int, default=512, help='input size [512]')
-    parser.add_argument('--num_classes', type=int, default=2, help='number of classes [2]')
-    return parser
+parser = ArgumentParser()
+
+parser.add_argument('--model-dir', dtype=str, default="model", required=True, help='directory where model to be tested is stored')
+parser.add_argument('--batch_size', type=int, default=64, help='batch size [64]')
+parser.add_argument('--use-ensemble',
+                    dest='ensemble', help='boolean for usage of ensemble',
+                    metavar='ENSEMBLE', required=True)
+parser.add_argument('--input_size', type=int, required=True, help='input size')
+parser.add_argument('--num_classes', type=int, required=True, help='number of classes')
+args = parser.parse_args()
 
 # test with test data given by mnist_data.py
 def test(args, model_directory, batch_size):

@@ -27,6 +27,10 @@ NUM_CHANNELS = 1
 PIXEL_DEPTH = 255
 VALIDATION_SIZE = 5000  # Size of the validation set.
 
+def normalize(data, pixel_depth=255):
+    data = (data - (pixel_depth / 2.0)) / pixel_depth # normalization
+    return data
+
 # Download MNIST data
 def maybe_download(filename):
     """Download the data from Yann's website, unless it's already here."""
@@ -212,6 +216,7 @@ def prepare_cosmology_data(args):
         else:
             img_arr=np.array(raw_image.getdata()).reshape(raw_image.size[0],raw_image.size[1]).astype(np.uint8)
         img_arr = img_arr.flatten()
+        img_arr = normalize(img_arr) # normalize to [-0.5, 0.5]
         label = float(label_dict[img_prefix])
 
         if idx<n_train:

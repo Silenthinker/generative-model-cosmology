@@ -117,8 +117,7 @@ def train(args):
     summary_writer = tf.summary.FileWriter(LOGS_DIRECTORY, graph=tf.get_default_graph())
 
     # Save the maximum accuracy value for validation data
-    max_acc = 0.
-
+    max_acc = -np.inf
     # Loop for epoch
     for epoch in range(training_epochs):
 

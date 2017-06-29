@@ -76,7 +76,7 @@ def test(args, model_directory):
         res.extend(y_final.flatten())
     pred = dict(zip(img_prefixes, res))
     print(pred)
-    df = pd.DataFrame(pred.items, columns=["Id", "Predicted"])
+    df = pd.DataFrame(pred.items(), columns=["Id", "Predicted"])
     df.to_csv(os.path.join(args.data_dir, "prediction.csv"), header=True)
 
 '''

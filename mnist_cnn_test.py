@@ -71,9 +71,9 @@ def test(args, model_directory):
         offset = (i * batch_size) % (test_size)
         batch_xs = test_data[offset:(offset + batch_size), :]
         y_final = sess.run(y, feed_dict={x: batch_xs, is_training: False})
-        res.extend(y_final)
+        y_final.flatten()
 
-    print(res)
+    print(y_final)
 
 '''
 # test with test data given by mnist_data.py

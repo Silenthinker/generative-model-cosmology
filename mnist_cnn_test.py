@@ -75,7 +75,7 @@ def test(args, model_directory):
         res.extend(y_final.flatten())
     pred = dict(zip(img_prefixes, res))
     print(pred)
-    with open(os.path.join(args.data_dir, 'prediction.csv'), 'wb') as f:
+    with open(os.path.join(args.data_dir, 'prediction.csv'), 'w') as f:
         writer = csv.DictWriter(f, fieldnames = ["Id", "Predicted"], delimiter = ",")
         writer.writeheader()
 

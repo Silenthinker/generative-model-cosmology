@@ -74,10 +74,12 @@ def test(args, model_directory):
         y_final = sess.run(y, feed_dict={x: batch_xs, is_training: False})
         res.extend(y_final.flatten())
     pred = dict(zip(img_prefixes, res))
-    print(res)
+    print(pred)
     with open(os.path.join(args.data_dir, 'prediction.csv'), 'w') as f:
-        writer = csv.writer(f, delimiter = ",")
-        writer.writerows(pred)
+        writer = csv.DictWriter(f, fieldnames = ["Id", "Predicted"], delimiter = ",")
+        writer.writeheader()
+        for row in pred.items():
+            writer.writerow(row)
 
 '''
 # test with test data given by mnist_data.py

@@ -35,6 +35,7 @@ parser.add_argument('--use-ensemble',
                     metavar='ENSEMBLE', required=True)
 parser.add_argument('--input_size', type=int, required=True, help='input size')
 parser.add_argument('--num_classes', type=int, required=True, help='number of classes')
+parser.add_argument('--test', type=bool, required=True, help='True for real test without ground truth')
 args = parser.parse_args()
 
 def test(args, model_directory):
@@ -65,7 +66,7 @@ def test(args, model_directory):
 
     # Calculate accuracy for all mnist test images
     test_size = test_data.shape[0]
-    total_batch = int(test_size / batch_size)
+    total_batch = int(test_size / batch_size) + 1
 
     res = []
     # Loop over all batches
@@ -78,7 +79,7 @@ def test(args, model_directory):
     print(pred)
     df = pd.DataFrame.from_dict(pred, orient="index")
     df = df.reset_index()
-    df.to_csv(os.path.join(args.data_dir, "prediction.csv"), header=["Id", "Predicted"])
+    df.to_csv(os.path.join(args.data_dir, "prediction.csv"), header=["Id", "Predicted"], index=False)
 
 '''
 # test with test data given by mnist_data.py

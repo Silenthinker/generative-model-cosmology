@@ -169,7 +169,7 @@ def prepare_cosmology_data(args):
     input_size = args.input_size
     use_data_augmentation = True if args.augment > 0 else False
 
-    train_ratio, val_ratio = 0.7, 0.1
+    train_ratio, val_ratio = 0.7, 0.15
     test_ratio = 1 - train_ratio - val_ratio
 
     feat_size = input_size*input_size

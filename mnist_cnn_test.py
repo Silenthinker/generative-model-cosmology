@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import numpy
 import os
+import csv
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 from tensorflow.examples.tutorials.mnist import input_data
@@ -72,8 +73,11 @@ def test(args, model_directory):
         batch_xs = test_data[offset:(offset + batch_size), :]
         y_final = sess.run(y, feed_dict={x: batch_xs, is_training: False})
         res.extend(y_final.flatten())
-
-    print(dict(zip(img_prefixes, res)))
+    pred = dict(zip(img_prefixes, res))
+    print(pred)
+    with open(os.path.join(args.data_dir, 'prediction.csv'), 'wb') as f:
+        writer = csv.DictWriter(f, fieldnames = ["Id", "Predicted"], delimiter = ",")
+        writer.writeheader()
 
 '''
 # test with test data given by mnist_data.py

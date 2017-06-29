@@ -10,9 +10,8 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 from tensorflow.examples.tutorials.mnist import input_data
 
-import mnist_data
 import cnn_model
-from load_data import normalize
+import load_data
 
 # user input
 from argparse import ArgumentParser
@@ -26,7 +25,8 @@ ENSEMBLE = True
 
 parser = ArgumentParser()
 
-parser.add_argument('--model-dir', dtype=str, default="model", required=True, help='directory where model to be tested is stored')
+parser.add_argument('--model_dir', type=str, default="model", required=True, help='directory where model to be tested is stored')
+parser.add_argument('--data_dir', type=str, default="data", required=True, help='test data directory [data]')
 parser.add_argument('--batch_size', type=int, default=64, help='batch size [64]')
 parser.add_argument('--use-ensemble',
                     dest='ensemble', help='boolean for usage of ensemble',
@@ -35,19 +35,17 @@ parser.add_argument('--input_size', type=int, required=True, help='input size')
 parser.add_argument('--num_classes', type=int, required=True, help='number of classes')
 args = parser.parse_args()
 
-# test with test data given by mnist_data.py
-def test(args, model_directory, batch_size):
+def test(args, model_directory):
     # Import data
     input_size = args.input_size
     num_classes = args.num_classes
-    PIXEL_DEPTH = mnist_data.PIXEL_DEPTH
-    mnist = input_data.read_data_sets('data/', one_hot=True)
+    batch_size = args.batch_size
+    test_data = load_data.prepare_cosmology_test_data(args)
 
     is_training = tf.placeholder(tf.bool, name='MODE')
 
     # tf Graph input
-    x = tf.placeholder(tf.float32, [None, input_size&input_size])
-    y_ = tf.placeholder(tf.float32, [None, num_classes])  # answer
+    x = tf.placeholder(tf.float32, [None, input_size*input_size])
     y = cnn_model.CNN(args, x, is_training=is_training)
 
     # Add ops to save and restore all the variables
@@ -55,29 +53,25 @@ def test(args, model_directory, batch_size):
     sess.run(tf.global_variables_initializer(), feed_dict={is_training: True})
 
     # Restore variables from disk
+    print("Loading trained model...")
     saver = tf.train.Saver()
-
-    # Calculate accuracy for all mnist test images
-    test_size = mnist.test.num_examples
-    total_batch = int(test_size / batch_size)
-
     saver.restore(sess, model_directory)
 
-    acc_buffer = []
+    # Calculate accuracy for all mnist test images
+    test_size = test_data.shape[0]
+    total_batch = int(test_size / batch_size)
+
+    res = []
     # Loop over all batches
     for i in range(total_batch):
+        offset = (i * batch_size) % (test_size)
+        batch_xs = test_data[offset:(offset + batch_size), :]
+        batch_xs = load_data.normalize(batch_xs)
 
-        batch = mnist.test.next_batch(batch_size)
-        batch_xs = (batch[0] - (PIXEL_DEPTH / 2.0) / PIXEL_DEPTH)  # make zero-centered distribution as in mnist_data.extract_data()
-        batch_ys = batch[1]
+        y_final = sess.run(y, feed_dict={x: batch_xs, is_training: False})
+        res.extend(y_final)
 
-        y_final = sess.run(y, feed_dict={x: batch_xs, y_: batch_ys, is_training: False})
-
-        correct_prediction = numpy.equal(numpy.argmax(y_final, 1), numpy.argmax(batch_ys, 1))
-
-        acc_buffer.append(numpy.sum(correct_prediction) / batch_size)
-
-    print("test accuracy for the stored model: %g" % numpy.mean(acc_buffer))
+    print(res)
 
 '''
 # test with test data given by mnist_data.py
@@ -179,19 +173,13 @@ def test_ensemble(args, model_directory_list, batch_size):
     print("test accuracy for the stored model: %g" % numpy.mean(acc_buffer))
 
 if __name__ == '__main__':
-    # Parse argument
-    parser = build_parser()
-    args = parser.parse_args()
     ensemble = args.ensemble
-    model_directory = args.model_directory
+    model_dir = args.model_dir
     batch_size = args.batch_size
-
     # Select ensemble test or a single model test
     if ensemble=='True': # use ensemble model
-        model_directory_list = [x[0] for x in os.walk(model_directory)]
+        model_directory_list = [x[0] for x in os.walk(model_dir)]
         test_ensemble(model_directory_list[1:], batch_size)
     else: # test a single model
-        # test_org(model_directory, batch_size) #test with test data given by mnist_data.py
-        test(args, model_directory+'/model.ckpt',
-             batch_size)  # test with test data given by tensorflow.examples.tutorials.mnist.input_data()
-
+        # test_org(model_dir, batch_size) #test with test data given by mnist_data.py
+        test(args, model_dir+'/model.ckpt')  # test with test data given by tensorflow.examples.tutorials.mnist.input_data()

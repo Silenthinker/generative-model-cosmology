@@ -250,3 +250,44 @@ def prepare_cosmology_data(args):
     train_size = train_total_data.shape[0]
 
     return train_total_data, train_size, validation_data, validation_y, test_data, test_y
+
+def prepare_cosmology_test_data(args):
+    """ Prepare cosmology test data
+    """
+
+    data_path = args.data_dir
+    input_size = args.input_size
+    feat_size = input_size*input_size
+
+    # Paths
+    resized_path = os.path.join(data_path, "query_resized")
+    query_path=os.path.join(data_path,"query")
+
+    # Initialization
+    img_prefixes = [f.split(".")[0] for f in os.listdir(query_path) if f.endswith(".png")]
+    # To determine if resize
+    sample_image = Image.open(os.path.join(query_path,"{}.png".format(img_prefixes[0])))
+    if np.array(sample_image.getdata()).shape[0] == input_size:
+        resize = False
+    else:
+        resize = True
+        if not os.path.exists(resized_path):
+            os.makedirs(resized_path)
+    random.shuffle(img_prefixes)
+    test_mat=np.zeros((len(img_prefixes), feat_size))
+
+    # Assemble train/test feature matrices / label vectors
+    for idx, img_prefix in enumerate(img_prefixes):
+        print("Image: {}/{}".format(idx+1,len(img_prefixes)))
+        raw_image=Image.open(os.path.join(query_path,"{}.png".format(img_prefix)))
+        if resize:
+            resized_image = sp.misc.imresize(raw_image, (input_size, input_size))
+            sp.misc.imsave(os.path.join(resized_path, "{}.png".format(img_prefix)), resized_image)
+            img_arr=resized_image.astype(np.uint8)
+        else:
+            img_arr=np.array(raw_image.getdata()).reshape(raw_image.size[0],raw_image.size[1]).astype(np.uint8)
+        img_arr = img_arr.flatten()
+        img_arr = normalize(img_arr) # normalize to [-0.5, 0.5]
+        test_mat[idx,:] = img_arr
+
+    return test_mat

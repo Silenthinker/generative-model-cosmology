@@ -188,8 +188,11 @@ def train(args):
         batch_ys = test_y[offset:(offset + batch_size), :]
 
         y_final = sess.run(y, feed_dict={x: batch_xs, y_: batch_ys, is_training: False})
-        correct_prediction = np.equal(np.argmax(y_final, 1), np.argmax(batch_ys, 1))
-        acc_buffer.append(np.sum(correct_prediction) / batch_size)
+        if args.num_classes > 1:
+            correct_prediction = np.equal(np.argmax(y_final, 1), np.argmax(batch_ys, 1))
+            acc_buffer.append(np.sum(correct_prediction) / batch_size)
+        else:
+            acc_buffer.append(y_final)
 
     print("test accuracy for the stored model: %g" % np.mean(acc_buffer))
 

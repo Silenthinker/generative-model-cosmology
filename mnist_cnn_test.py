@@ -50,12 +50,16 @@ def test(args, model_directory):
 
     # Add ops to save and restore all the variables
     sess = tf.InteractiveSession()
-    sess.run(tf.global_variables_initializer(), feed_dict={is_training: True})
+    # sess.run(tf.global_variables_initializer(), feed_dict={is_training: True})
 
-    # Restore variables from disk
-    print("Loading trained model...")
-    saver = tf.train.Saver()
-    saver.restore(sess, model_directory)
+    ckpt = tf.train.get_checkpoint_state(args.model_dir)
+    if ckpt and tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
+        print("Reading model parameters from %s" % ckpt.model_checkpoint_path)
+        saver = tf.train.Saver()
+        saver.restore(sess, ckpt.model_checkpoint_path)
+  else:
+    print("Created model with fresh parameters.")
+    session.run(tf.global_variables_initializer())
 
     # Calculate accuracy for all mnist test images
     test_size = test_data.shape[0]

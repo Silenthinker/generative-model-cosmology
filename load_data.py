@@ -273,7 +273,6 @@ def prepare_cosmology_test_data(args):
         resize = True
         if not os.path.exists(resized_path):
             os.makedirs(resized_path)
-    random.shuffle(img_prefixes)
     test_mat=np.zeros((len(img_prefixes), feat_size))
 
     # Assemble train/test feature matrices / label vectors

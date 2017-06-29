@@ -77,7 +77,7 @@ def test(args, model_directory):
     print(res)
     with open(os.path.join(args.data_dir, 'prediction.csv'), 'w') as f:
         writer = csv.writer(f, delimiter = ",")
-        w.writerows(pred)
+        writer.writerows(pred)
 
 '''
 # test with test data given by mnist_data.py

@@ -57,9 +57,9 @@ def test(args, model_directory):
         print("Reading model parameters from %s" % ckpt.model_checkpoint_path)
         saver = tf.train.Saver()
         saver.restore(sess, ckpt.model_checkpoint_path)
-  else:
-    print("Created model with fresh parameters.")
-    session.run(tf.global_variables_initializer())
+    else:
+        print("Created model with fresh parameters.")
+        session.run(tf.global_variables_initializer())
 
     # Calculate accuracy for all mnist test images
     test_size = test_data.shape[0]

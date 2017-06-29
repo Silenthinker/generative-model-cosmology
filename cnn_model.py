@@ -20,11 +20,11 @@ def CNN(args, inputs, is_training=True):
         # padding='SAME', activation_fn=nn.relu,
         # weights_initializer = initializers.xavier_initializer(),
         # biases_initializer = init_ops.zeros_initializer,
-        net = slim.conv2d(x, 32, [5, 5], scope='conv1')
+        net = slim.conv2d(x, 16, [5, 5], scope='conv1')
         net = slim.max_pool2d(net, [2, 2], scope='pool1')
-        net = slim.conv2d(net, 64, [5, 5], scope='conv2')
+        net = slim.conv2d(net, 32, [5, 5], scope='conv2')
         net = slim.max_pool2d(net, [2, 2], scope='pool2')
-        net = slim.conv2d(net, 128, [5, 5], scope='conv3')
+        net = slim.conv2d(net, 64, [5, 5], scope='conv3')
         net = slim.max_pool2d(net, [2, 2], scope='pool3')
         net = slim.flatten(net, scope='flatten4')
 

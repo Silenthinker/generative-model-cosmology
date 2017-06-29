@@ -40,7 +40,7 @@ def test(args, model_directory):
     input_size = args.input_size
     num_classes = args.num_classes
     batch_size = args.batch_size
-    test_data = load_data.prepare_cosmology_test_data(args)
+    test_data, img_prefixes = load_data.prepare_cosmology_test_data(args)
 
     is_training = tf.placeholder(tf.bool, name='MODE')
 

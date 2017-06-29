@@ -289,4 +289,4 @@ def prepare_cosmology_test_data(args):
         img_arr = normalize(img_arr) # normalize to [-0.5, 0.5]
         test_mat[idx,:] = img_arr
 
-    return test_mat
+    return test_mat, img_prefixes

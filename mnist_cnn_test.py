@@ -50,7 +50,7 @@ def test(args, model_directory):
 
     # Add ops to save and restore all the variables
     sess = tf.InteractiveSession()
-    # sess.run(tf.global_variables_initializer(), feed_dict={is_training: True})
+    sess.run(tf.global_variables_initializer(), feed_dict={is_training: True})
 
     ckpt = tf.train.get_checkpoint_state(args.model_dir)
     if ckpt and tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
@@ -70,8 +70,6 @@ def test(args, model_directory):
     for i in range(total_batch):
         offset = (i * batch_size) % (test_size)
         batch_xs = test_data[offset:(offset + batch_size), :]
-        batch_xs = load_data.normalize(batch_xs)
-
         y_final = sess.run(y, feed_dict={x: batch_xs, is_training: False})
         res.extend(y_final)
 

@@ -148,21 +148,22 @@ def prepare_MNIST_data(args):
 
     return train_total_data, train_size, validation_data, validation_labels, test_data, test_labels
 
-def prepare_cosmology_data(args):
-    """ Prepare cosmology data
-    """
-    def csv_to_dict(csv_path):
+def csv_to_dict(csv_path):
         with open(csv_path,'r') as fp:
             csv_fp=csv.reader(fp)
             next(csv_fp)
             d = dict(filter(None, csv_fp))
             return d
 
-    def one_hot_encoding(labels):
-        res = np.zeros((labels.shape[0], args.num_classes))
-        res[range(labels.shape[0]), labels] = 1
-        res = np.reshape(res, (-1, args.num_classes))
-        return res
+def one_hot_encoding(labels):
+    res = np.zeros((labels.shape[0], args.num_classes))
+    res[range(labels.shape[0]), labels] = 1
+    res = np.reshape(res, (-1, args.num_classes))
+    return res
+
+def prepare_cosmology_data(args):
+    """ Prepare cosmology data
+    """
 
     data_path = args.data_dir
     input_size = args.input_size

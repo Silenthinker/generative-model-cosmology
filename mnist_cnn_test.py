@@ -66,7 +66,7 @@ def test(args, model_directory):
 
     # Calculate accuracy for all mnist test images
     test_size = test_data.shape[0]
-    total_batch = int(test_size / batch_size) + 1
+    total_batch = test_size/batch_size if test_size%batch_size==0 else int(test_size / batch_size) + 1
 
     res = []
     # Loop over all batches

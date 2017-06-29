@@ -8,6 +8,7 @@ import numpy
 import os
 import csv
 import tensorflow as tf
+import pandas as pd
 import tensorflow.contrib.slim as slim
 from tensorflow.examples.tutorials.mnist import input_data
 
@@ -75,11 +76,8 @@ def test(args, model_directory):
         res.extend(y_final.flatten())
     pred = dict(zip(img_prefixes, res))
     print(pred)
-    with open(os.path.join(args.data_dir, 'prediction.csv'), 'w') as f:
-        writer = csv.DictWriter(f, fieldnames = ["Id", "Predicted"], delimiter = ",")
-        writer.writeheader()
-        for row in pred.items():
-            writer.writerow(row)
+    df = pd.DataFrame.from_dict(pred)
+    df.to_csv(os.path.join(args.data_dir, "prediction.csv"), header=["Id", "Predicted"])
 
 '''
 # test with test data given by mnist_data.py

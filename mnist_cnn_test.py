@@ -73,7 +73,7 @@ def test(args, model_directory):
         y_final = sess.run(y, feed_dict={x: batch_xs, is_training: False})
         # y_final.flatten()
 
-    print(y_final)
+    print(y_final.flatten())
 
 '''
 # test with test data given by mnist_data.py

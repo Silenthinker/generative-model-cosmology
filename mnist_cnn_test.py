@@ -78,6 +78,7 @@ def test(args, model_directory):
     with open(os.path.join(args.data_dir, 'prediction.csv'), 'w') as f:
         writer = csv.DictWriter(f, fieldnames = ["Id", "Predicted"], delimiter = ",")
         writer.writeheader()
+        writer.writerow(pred)
 
 '''
 # test with test data given by mnist_data.py

@@ -77,6 +77,7 @@ def test(args, model_directory):
     pred = dict(zip(img_prefixes, res))
     print(pred)
     df = pd.DataFrame.from_dict(pred, orient="index")
+    df = df.reset_index()
     df.to_csv(os.path.join(args.data_dir, "prediction.csv"), header=["Id", "Predicted"])
 
 '''

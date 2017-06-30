@@ -194,8 +194,10 @@ def train(args):
             acc_buffer.append(np.sum(correct_prediction) / batch_size)
         else:
             acc_buffer.append(y_final)
-
-    print("test accuracy for the stored model: {}".format(-1.*np.mean(acc_buffer)))
+    test_accuracy = -1.*np.mean(acc_buffer)
+    print("test accuracy for the stored model: {}".format(test_accuracy))
+    with open("log.out", "a") as log_file:
+        log_file.write("test accuracy: {}\n".format(test_accuracy))
 
     test_data, img_prefixes = load_data.prepare_cosmology_test_data(args)
     res = []

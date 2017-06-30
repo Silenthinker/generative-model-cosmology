@@ -22,10 +22,10 @@ def CNN(args, inputs, is_training=True):
         # biases_initializer = init_ops.zeros_initializer,
         net = slim.conv2d(x, 16, [10, 10], stride=4, scope='conv1') # 246 -> 60
         net = slim.max_pool2d(net, [5, 5], scope='pool1')
-        net = slim.conv2d(net, 32, [5, 5], scope='conv2')
-        net = slim.max_pool2d(net, [2, 2], scope='pool2')
-        net = slim.conv2d(net, 64, [5, 5], scope='conv3')
-        net = slim.max_pool2d(net, [2, 2], scope='pool3')
+        net = slim.conv2d(net, 32, [3, 3], scope='conv2')
+        net = slim.max_pool2d(net, [3, 3], scope='pool2')
+        net = slim.conv2d(net, 64, [3, 3], scope='conv3')
+        net = slim.max_pool2d(net, [3, 3], scope='pool3')
         net = slim.flatten(net, scope='flatten4')
 
         # For slim.fully_connected, default argument values are like

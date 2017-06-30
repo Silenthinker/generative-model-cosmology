@@ -7,6 +7,7 @@ from __future__ import print_function
 import os
 import numpy as np
 import argparse
+import pandas as pd
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
@@ -195,6 +196,15 @@ def train(args):
             acc_buffer.append(y_final)
 
     print("test accuracy for the stored model: {}".format(-1.*np.mean(acc_buffer)))
+
+    test_data, img_prefixes = load_data.prepare_cosmology_test_data(args)
+    res = []
+    y_final = sess.run(y, feed_dict={x: test_data, is_training: False})
+    pred = dict(zip(img_prefixes, y_final.flatten().tolist()))
+    print(pred)
+    df = pd.DataFrame.from_dict(pred, orient="index")
+    df = df.reset_index()
+    df.to_csv(os.path.join(args.data_dir, "prediction.csv"), header=["Id", "Predicted"], index=False)
 
 if __name__ == '__main__':
     train(args)
